@@ -1,4 +1,5 @@
-import User from "../models/user.modal"
+import User from "../modals/user.modal.js"
+import jwt from "jsonwebtoken";
 
 export const googleAuth = async(req,res)=>{
     try {
@@ -25,5 +26,17 @@ export const googleAuth = async(req,res)=>{
     } catch (error) {
         return res.status(500).json({message:`google auth error ${error}`})
    
+    }
+}
+
+export const logOut = async(req,res)=>{
+    try {
+        return res.clearCookie("token",{
+            httpOnly:true,
+            secure:false,
+            sameSite:"strict"
+        })
+    } catch (error) {
+        return res.status(500).json({message:`Logout Error ${error}`});
     }
 }
