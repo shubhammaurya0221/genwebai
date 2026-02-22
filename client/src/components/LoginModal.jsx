@@ -1,7 +1,17 @@
 import React from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { signInWithPopup } from "firebase/auth";
+import { auth, provider } from "../firebase";
 
 function LoginModal({ open, onClose }) {
+  const handleGoogleAuth=async()=>{
+    try {
+      const result = await signInWithPopup(auth,provider);
+      console.log(result);
+    } catch (error) {
+      console.log(error);
+    }
+  }
   return (
     <AnimatePresence>
       {open && (
@@ -49,17 +59,37 @@ function LoginModal({ open, onClose }) {
                   </span>
                 </h2>
                 <motion.button
-                 whileHover={{scale:1.04}}
-                 whileTap={{scale:0.96}}
-                 className="group relative w-full h-13 rounded-xl bg-white text-black font-semibold shadow-xl overflow-hidden"
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
+                  onClick={handleGoogleAuth}
+                  className="group relative w-full h-13 rounded-xl bg-white text-black font-semibold shadow-xl overflow-hidden"
+
                 >
-                  <img
-                    src="https://www.svgrepo.com/show/303108/google-icon-logo.svg"
-                    alt=""
-                    className="h-5 w-5"
-                  />
-                  Continue with Google
+                  <div className="relative flex items-center justify-center gap-3">
+                    <img
+                      src="https://www.svgrepo.com/show/303108/google-icon-logo.svg"
+                      alt=""
+                      className="h-5 w-5"
+                    />
+                    Continue with Google
+                  </div>
                 </motion.button>
+                <div className="flex items-center gap-4 my-10">
+                  <div className="h-px flex-1 bg-white/10"/>
+                  <span className="test-xs text-zinc-500 tracking-wide">Secure Login</span>
+                  <div className="h-px flex-1 bg-white/10"/>
+                </div>
+
+                <p className="text-xs text-zinc-500 leading-relaxed">
+                  By continuing, you agree to our{" "}
+                  <span className="underline cursor-pointer hover:text-zinc-300">
+                    Term of Service
+                  </span>{" "}
+                  and{" "}
+                  <span className="underline cursor-pointer hover:text-zinc-300">
+                    Privacy Policy
+                  </span>
+                </p>
               </div>
             </div>
           </motion.div>
