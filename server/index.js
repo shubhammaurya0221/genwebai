@@ -6,6 +6,7 @@ import connectDB from "./config/db.js";
 import authRouter from "./routes/auth.routes.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import userRouter from "./routes/user.routes.js";
 const port = process.env.PORT || 5000;
 const app = express(); // app -> Instence
 
@@ -16,6 +17,7 @@ app.use(cors({
 app.use(express.json()); // convert client data in json
 app.use(cookieParser()); // helps to parse cookie
 app.use("/api/auth", authRouter);
+app.use("/api/user", userRouter);
 
 app.listen(port,()=>{
     console.log("SERVER STARTED");
