@@ -1,5 +1,4 @@
 import express from "express";
-import { googleAuth, logOut } from "../controller/auth.controller.js";
 import isAuth from "../middlewares/isAuth.js";
 import { getCurrentUser } from "../controller/user.controller.js";
 
