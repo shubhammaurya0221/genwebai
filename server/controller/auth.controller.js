@@ -1,4 +1,4 @@
-import User from "../modals/user.modal.js"
+import User from "../models/user.model.js"
 import jwt from "jsonwebtoken";
 
 export const googleAuth = async(req,res)=>{

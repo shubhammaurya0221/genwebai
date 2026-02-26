@@ -6,6 +6,8 @@ import { Coins } from "lucide-react";
 import axios from "axios";
 import { setUserData } from "../redux/userSlice";
 import { serverUrl } from "../App";
+import { useNavigate } from "react-router-dom";
+import Dashboard from "./Dashboard";
 
 function Home() {
   const highlights = [
@@ -17,15 +19,18 @@ function Home() {
   const [openLogin, setOpenLogin] = useState(false);
   const { userData } = useSelector((state) => state.user);
   const [openProfile, setOpenProfile] = useState(false);
-  const handleLogOut = async()=>{
+  const nevigate = useNavigate();
+  const handleLogOut = async () => {
     try {
-      await axios.get(`${serverUrl}/api/auth/logout`,{withCredentials:true})
-      dispatch(setUserData(null))
-      setOpenProfile(false)
+      await axios.get(`${serverUrl}/api/auth/logout`, {
+        withCredentials: true,
+      });
+      dispatch(setUserData(null));
+      setOpenProfile(false);
     } catch (error) {
       console.log(error);
     }
-  }
+  };
   return (
     <div className="relative min-h-screen bg-[#040404] text-white overflow-hidden">
       {/* HEADER SECTION */}
@@ -61,7 +66,7 @@ function Home() {
               <div className="relative">
                 <button
                   className="flex items-center"
-                  onClick={()=>setOpenProfile(!openProfile)}
+                  onClick={() => setOpenProfile(!openProfile)}
                 >
                   <img
                     src={
@@ -73,7 +78,7 @@ function Home() {
                     className="h-9 w-9 rounded-full border border-white/20 object-cover"
                   />
                 </button>
-                <AnimatePresence >
+                <AnimatePresence>
                   {openProfile && (
                     <>
                       <motion.div
@@ -97,8 +102,18 @@ function Home() {
                           <span className="font-semibold">+</span>
                         </button>
 
-                        <button className="w-full px-4 py-3 text-left text-sm hover:bg-white/5" >Dashboard</button>
-                        <button className="w-full px-4 py-3 text-left text-sm text-red-400 hover:bg-white/5" onClick={handleLogOut}>Logout</button>
+                        <button
+                          className="w-full px-4 py-3 text-left text-sm hover:bg-white/5"
+                          onClick={() => nevigate("/dashboard")}
+                        >
+                          Dashboard
+                        </button>
+                        <button
+                          className="w-full px-4 py-3 text-left text-sm text-red-400 hover:bg-white/5"
+                          onClick={handleLogOut}
+                        >
+                          Logout
+                        </button>
                       </motion.div>
                     </>
                   )}
@@ -131,9 +146,15 @@ function Home() {
         </motion.p>
         <button
           className="px-10 py-4 rounded-xl bg-white text-black font-semibold hover:scale-105 transition mt-12"
-          onClick={() => setOpenLogin(true)}
+          onClick={() => {
+            if (userData) {
+              nevigate("/dashboard");
+            } else {
+              setOpenLogin(true);
+            }
+          }}
         >
-          Get Started
+          {userData ? "Go to Dashboard" : "Get Started"}
         </button>
       </section>
       {/* CARD SHOWCASE */}
