@@ -5,7 +5,7 @@ import useGetCurrentUser from './hooks/useGetCurrentUser';
 export const serverUrl = "http://localhost:8000"
 
 function App() {
-  useGetCurrentUser(); // President Authentication
+  useGetCurrentUser(); // Persistant Authentication
   return (
     <BrowserRouter>
     <Routes>

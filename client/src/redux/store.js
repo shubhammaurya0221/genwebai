@@ -5,6 +5,7 @@ import userSlice from './userSlice'
 
 export const store = configureStore({
   reducer: {
-    user:userSlice
+    // reducer function coming from 'userSlice', it helps to update the initial state of userData
+    user:userSlice, 
   }, 
 })
