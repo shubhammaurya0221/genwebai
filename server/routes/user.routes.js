@@ -1,10 +1,11 @@
 import express from "express";
 import isAuth from "../middlewares/isAuth.js";
-import { getCurrentUser } from "../controller/user.controller.js";
+import { generateDemo, getCurrentUser } from "../controller/user.controller.js";
 
 const userRouter = express.Router();
 
-userRouter.get("/me",isAuth,getCurrentUser); 
+userRouter.get("/me",isAuth,getCurrentUser);
+userRouter.get("/gen", generateDemo); // for checking purpose only
 
 export default userRouter;
 

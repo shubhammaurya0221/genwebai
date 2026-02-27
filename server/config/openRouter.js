@@ -1,7 +1,8 @@
+// Here, here we implemented a Deepseek model by using OpenRouter API KEY
 const openRouterUrl = "https://openrouter.ai/api/v1/chat/completions";
-const model = "deepseek/deepseek-chat ";
+const model = "deepseek/deepseek-chat";
 
-const generateResponse = async (prompt) => {
+export const generateResponse = async (prompt) => {
   const res = await fetch(openRouterUrl, {
     method: "POST",
     headers: {
@@ -28,5 +29,5 @@ const generateResponse = async (prompt) => {
     throw new Error("openRouter Error"+ err);
   }
   const data = await res.json();
-  return data;
+  return data.choices[0].message.content;
 };
