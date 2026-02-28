@@ -6,28 +6,60 @@ import { serverUrl } from "../App";
 import { useState } from "react";
 import { Code2, Monitor, Rocket, Send } from "lucide-react";
 import { useRef } from "react";
+import { AnimatePresence } from "framer-motion";
 
 function Editor() {
   const { id } = useParams();
   const [website, setWebsite] = useState(null);
+  
   const [error, setError] = useState("");
   const [code, setCode] = useState("")
   const [messages,setMessages] = useState([])
   const iframeRef = useRef(null);
   const [prompt, setPrompt] =useState("");
+  const [showCode, setShowCode]=useState(false);
 
+  const [updateLoading, setUpdateLoading] = useState(false);
+  const [thinkingIndex,settTinkingIndex] = useState(0);
+  const thinkingSteps = [
+    "understanding your request...",
+    "Planning layout changes...",
+    "Improving responsiveness...",
+    "Finalizing animations...",
+    "Finalizing Update...",
+  ]
+
+  // handling update 
   const handleUpdate=async () => {
-    setMessages((m)=>[...m,{role:"user",content:prompt}])
+    if(!prompt) return 
+    setUpdateLoading(true);
+    const text=prompt
+    setPrompt("")
+    setMessages((m)=>[...m,{role:"user",content:text}])
     try {
         const result=await axios.post(`${serverUrl}/api/website/update/${id}`,{prompt},
         {withCredentials:true})
+        setUpdateLoading(false)
         console.log(result)
         setMessages((m)=>[...m,{role:"ai",content:result.data.message}])
         setCode(result.data.code)
     } catch (error) {
+        setUpdateLoading(false)
         console.log(error)
     }
 }
+
+// thinking
+useEffect(() => {
+  if (!updateLoading) return;
+
+  const interval = setInterval(() => {
+    settTinkingIndex((i) => (i + 1) % thinkingSteps.length);
+  }, 2200);
+
+  return () => clearInterval(interval);
+}, [updateLoading]);
+
   useEffect(() => {
     const handleGetWebsite = async () => {
       try {
@@ -73,6 +105,7 @@ function Editor() {
 
   return (
     <div className="h-screen w-screen flex bg-black text-white overflow-hidden">
+      {/* Left chat section */}
       <aside className="hidden lg:flex w-90 flex-col border boder-r border-white/10 bg-black/80">
       {/* Header */}
       <div className="h-14 px-4 flex items-center justify-between border-b bg-black border-white/10">
@@ -99,6 +132,14 @@ function Editor() {
             </div>
           </div>
         ))}
+
+        {updateLoading && 
+        <div className="max-w-[85%] mr-auto">
+          <div className="px-4 py-2.5 rounded-xl text-xs bg-white/5 border border-white/10 text-zinc-400 italic">
+          {thinkingSteps[thinkingIndex]}
+          </div>
+        </div>
+        }
       </div>
       {/* TextArea for Chat */}
       <div className="p-3 border-t border-white/10">
@@ -114,6 +155,7 @@ function Editor() {
             />
             <button 
             onClick={handleUpdate}
+            disabled={updateLoading}
             className="px-4 py-3 rounded-2xl bg-white text-black">
               <Send size={14} />
             </button>
@@ -129,7 +171,7 @@ function Editor() {
             <button className="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-linear-to-r from-indigo-500 to-purple-500 text-sm font-semibold hover:scale-105 transition">
               <Rocket size={14} /> Deploy
             </button>
-            <button className="p-2">
+            <button className="p-2" onClick={()=>setShowCode(!showCode)}>
               <Code2 size={18} />
             </button>
             <button className="p-2">
@@ -139,6 +181,14 @@ function Editor() {
         </div>
         <iframe ref={iframeRef} className="flex-1 w-full bg-white" />
       </div>
+      {/* Monaco Code Editor */}
+      <AnimatePresence>
+        {showCode && (
+          <motion.div>
+
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

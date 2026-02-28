@@ -74,7 +74,7 @@ function Home() {
                       userData?.picture ||
                       `https://ui-avatars.com/api/?name=${userData.name}`
                     }
-                    alt=""
+                    referrerPolicy="no-referrer"
                     className="h-9 w-9 rounded-full border border-white/20 object-cover"
                   />
                 </button>
