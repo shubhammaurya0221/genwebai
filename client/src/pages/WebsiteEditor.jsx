@@ -13,7 +13,6 @@ import { motion } from "framer-motion";
 function WebsiteEditor() {
   const { id } = useParams();
   const [website, setWebsite] = useState(null);
-
   const [error, setError] = useState("");
   const [code, setCode] = useState("");
   const [messages, setMessages] = useState([]);
@@ -22,10 +21,9 @@ function WebsiteEditor() {
   const [showCode, setShowCode] = useState(false);
   const [showFullPreview,setShowFullPreview] = useState(false);
   const [showChat,setShowChat] = useState(false);
-
-
   const [updateLoading, setUpdateLoading] = useState(false);
   const [thinkingIndex, settTinkingIndex] = useState(0);
+  
   const thinkingSteps = [
     "understanding your request...",
     "Planning layout changes...",
@@ -195,25 +193,24 @@ function WebsiteEditor() {
       </div>
       {/* Show Chat for mobile */}
       <AnimatePresence>
-  {showChat && (
-    <motion.div
-      initial={{ y: 100, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      exit={{ y: 100, opacity: 0 }}
-      transition={{ duration: 0.25 }}
-      className="
-        fixed bottom-0 left-0 right-0
-        sm:bottom-6 sm:right-6 sm:left-auto
-        w-full sm:w-[380px]
-        h-[100dvh] sm:h-[550px]
-        bg-black/95 backdrop-blur-xl
-        border border-white/10
-        rounded-none sm:rounded-3xl
-        shadow-2xl
-        flex flex-col
-        z-50
-      "
-    >
+      {showChat && (
+      <motion.div
+        initial={{ y: 100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 100, opacity: 0 }}
+        transition={{ duration: 0.25 }}
+        className="
+          fixed bottom-0 left-0 right-0
+          sm:bottom-6 sm:right-6 sm:left-auto
+          w-full sm:w-[380px]
+          h-[100dvh] sm:h-[550px]
+          bg-black/95 backdrop-blur-xl
+          border border-white/10
+          rounded-none sm:rounded-3xl
+          shadow-2xl
+          flex flex-col
+          z-50"
+      >
       
       {/* Header */}
       <div className="h-14 px-4 flex items-center gap-3 border-b border-white/10 bg-black sticky top-0 z-10">
@@ -282,7 +279,7 @@ function WebsiteEditor() {
 
     </motion.div>
   )}
-</AnimatePresence>
+      </AnimatePresence>
       {/* Monaco Code Editor */}
       <AnimatePresence>
         {showCode && (
@@ -308,6 +305,7 @@ function WebsiteEditor() {
              theme="vs-dark"
              value={code}
              onChange={(v)=>setCode(v)}
+             
             />
           </motion.div>
         )}
