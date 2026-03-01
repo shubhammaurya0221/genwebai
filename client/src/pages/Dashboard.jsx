@@ -12,6 +12,16 @@ function Dashboard() {
   const [websites, setWebsites] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const handleDeploy = async (id) => {
+    try {
+      const result = await axios.get(`${serverUrl}/api/website/deploy/${id}`, {
+        withCredentials: true,
+      });
+      window.open(`${result.data.url}`, "_blank");
+    } catch (error) {
+      console.log(error);
+    }
+  };
   useEffect(() => {
     const handleGetAllWebsites = async () => {
       setLoading(true);
@@ -19,7 +29,7 @@ function Dashboard() {
         const result = await axios.get(`${serverUrl}/api/website/get-all`, {
           withCredentials: true,
         });
-        console.log(result.data);
+        console.log("webites data", result.data);
         setWebsites(result.data.websites);
         setLoading(false);
       } catch (error) {
@@ -111,13 +121,16 @@ function Dashboard() {
                   </p>
 
                   {w.deployed ? (
-                    <button className="mt-auto flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-indigo-500 to-purple-500 hover:scale-105 transition">
-                      <Rocket size={18} /> Deploy
+                    <button className="mt-auto flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-white/10 hover:bg-white/20 hover:scale-105 transition">
+                      <Share2 size={18} /> Share Link
                     </button>
                   ) : (
                     // Added styling to the Share Link button so it matches the UI
-                    <button className="mt-auto flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-white/10 hover:bg-white/20 hover:scale-105 transition">
-                      <Share2 size={18} /> Share Link
+                    <button
+                      onClick={() => handleDeploy(w._id)}
+                      className="mt-auto flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-indigo-500 to-purple-500 hover:scale-105 transition"
+                    >
+                      <Rocket size={18} /> Deploy
                     </button>
                   )}
                 </div>

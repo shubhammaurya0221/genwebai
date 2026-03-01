@@ -319,7 +319,7 @@ function WebsiteEditor() {
             exit={{ x: "100%" }}
             className="fixed inset-0 z-[9999] bg-black"
           >
-            <iframe className="h-full w-full bg-white" srcDoc={code}  />
+            <iframe className="h-full w-full bg-white" srcDoc={code} sandbox="allow-scripts allow-same-origin allow-forms" />
             <button onClick={()=>setShowFullPreview(!showFullPreview)} className="absolute top-4 right-4 p-2 bg-black/70 rounded-lg" >X</button>
           </motion.div>
         )}
