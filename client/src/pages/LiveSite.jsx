@@ -4,15 +4,15 @@ import { serverUrl } from "../App";
 import axios from "axios";
 
 function LiveSite() {
-  const { slug } = useParams();
+  const { id } = useParams();
   const [html, setHtml] = useState("");
   const [error, setError] = useState("");
   useEffect(() => {
     const handleGetWebsite = async () => {
-      if (!slug) return;
+      // if (!slug) return;
       try {
         const result = await axios.get(
-          `${serverUrl}/api/website/get-by-slug/${slug}`,
+          `${serverUrl}/api/website/get-by-slug/${id}`,
           { withCredentials: true },
         );
         setHtml(result.data.latestCode);
@@ -23,7 +23,9 @@ function LiveSite() {
       }
     };
     handleGetWebsite();
-  }, [slug]);
+  }, [id]);
+
+  
 
   if (error) {
     return (
