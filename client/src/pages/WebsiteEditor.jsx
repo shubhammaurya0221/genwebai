@@ -1,26 +1,25 @@
 import axios from "axios";
-import React from "react";
-import { useEffect } from "react";
-import { useParams } from "react-router-dom";
+import React, { useEffect, useState, useRef } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { serverUrl } from "../App";
-import { useState } from "react";
 import {
   Code2,
   MessageSquare,
   Monitor,
   MonitorCheck,
-  MonitorCheckIcon,
   Rocket,
   Send,
-  SmileIcon,
   X,
+  ChevronLeft,
+  Terminal,
+  ExternalLink,
+  Cpu
 } from "lucide-react";
-import { useRef } from "react";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import Editor from "@monaco-editor/react";
-import { motion } from "framer-motion";
 
 function WebsiteEditor() {
+  const navigate = useNavigate();
   const { id } = useParams();
   const [website, setWebsite] = useState(null);
   const [error, setError] = useState("");
@@ -32,31 +31,26 @@ function WebsiteEditor() {
   const [showFullPreview, setShowFullPreview] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
-  const [thinkingIndex, settTinkingIndex] = useState(0);
+  const [thinkingIndex, setThinkingIndex] = useState(0);
+
+  const thinkingSteps = [
+    "PARSING_NEURAL_REQUEST...",
+    "ARCHITECTING_DOM_STRUCTURE...",
+    "OPTIMIZING_FLUX_STYLING...",
+    "INJECTING_INTERACTIVE_LOGIC...",
+    "SYNCHRONIZING_UI_LAYER...",
+  ];
 
   const handleDeploy = async () => {
     try {
-      const result = await axios.get(
-        `${serverUrl}/api/website/deploy/${website._id}`,
-        {
-          withCredentials: true,
-        },
-      );
+      const result = await axios.get(`${serverUrl}/api/website/deploy/${website._id}`, { withCredentials: true });
+      setWebsite((prev) => ({ ...prev, deployed: true, deployUrl: result.data.url }));
       window.open(result.data.url, "_blank");
     } catch (error) {
-      console.log(error);
+      alert("❌ Deployment Protocol Failed");
     }
   };
 
-  const thinkingSteps = [
-    "understanding your request...",
-    "Planning layout changes...",
-    "Improving responsiveness...",
-    "Finalizing animations...",
-    "Finalizing Update...",
-  ];
-
-  // handling update
   const handleUpdate = async () => {
     if (!prompt) return;
     setUpdateLoading(true);
@@ -64,46 +58,32 @@ function WebsiteEditor() {
     setPrompt("");
     setMessages((m) => [...m, { role: "user", content: text }]);
     try {
-      const result = await axios.post(
-        `${serverUrl}/api/website/update/${id}`,
-        { prompt },
-        { withCredentials: true },
-      );
+      const result = await axios.post(`${serverUrl}/api/website/update/${id}`, { prompt: text }, { withCredentials: true });
       setUpdateLoading(false);
-      console.log(result);
       setMessages((m) => [...m, { role: "ai", content: result.data.message }]);
       setCode(result.data.code);
     } catch (error) {
       setUpdateLoading(false);
-      console.log(error);
     }
   };
 
-  // thinking
   useEffect(() => {
     if (!updateLoading) return;
-
     const interval = setInterval(() => {
-      settTinkingIndex((i) => (i + 1) % thinkingSteps.length);
-    }, 2200);
-
+      setThinkingIndex((i) => (i + 1) % thinkingSteps.length);
+    }, 2000);
     return () => clearInterval(interval);
   }, [updateLoading]);
 
   useEffect(() => {
     const handleGetWebsite = async () => {
       try {
-        const result = await axios.get(
-          `${serverUrl}/api/website/get-by-id/${id}`,
-          { withCredentials: true },
-        );
-        // console.log(result)
+        const result = await axios.get(`${serverUrl}/api/website/get-by-id/${id}`, { withCredentials: true });
         setWebsite(result.data);
         setCode(result.data.latestCode);
         setMessages(result.data.conversation);
       } catch (error) {
-        console.log(error);
-        setError(error.response.data.message);
+        setError(error.response?.data?.message || "Internal System Error");
       }
     };
     handleGetWebsite();
@@ -117,260 +97,144 @@ function WebsiteEditor() {
     return () => URL.revokeObjectURL(url);
   }, [code]);
 
-  if (error) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-black text-red-400">
-        {error}
-      </div>
-    );
-  }
-
-  if (!website) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-black text-red-400">
-        Loding...
-      </div>
-    );
-  }
+  if (error) return <div className="h-screen flex items-center justify-center bg-[#020203] text-red-500 font-mono tracking-tighter uppercase"> {error} </div>;
+  if (!website) return <div className="h-screen flex items-center justify-center bg-[#020203]"><div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" /></div>;
 
   return (
-    <div className="h-screen w-screen flex bg-black text-white overflow-hidden">
-      {/* Left chat section */}
-      <aside className="hidden lg:flex w-90 flex-col border boder-r border-white/10 bg-black/80">
-        {/* Header */}
-        <div className="h-14 px-4 flex items-center justify-between border-b bg-black border-white/10">
-          <span className="font-semibold truncate">{website.title}</span>
-        </div>
-        {/* Chat section */}
-        <>
-          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 bg-black">
-            {messages.map((m, i) => (
-              <div
-                key={i}
-                className={`max-w-[85%] ${
-                  m.role === "user" ? "ml-auto" : "mr-auto"
-                }`}
-              >
-                <div
-                  className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                    m.role === "user"
-                      ? "bg-white text-black"
-                      : "bg-white/5 border border-white/10 text-zinc-200"
-                  }`}
-                >
-                  {m.content}
-                </div>
-              </div>
-            ))}
+    <div className="h-screen w-screen flex bg-[#020203] text-zinc-100 overflow-hidden font-sans">
+      {/* GLOBAL BACKGROUND GLOW */}
+      <div className="fixed top-[-10%] left-[-10%] w-[30%] h-[30%] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" />
 
-            {updateLoading && (
-              <div className="max-w-[85%] mr-auto">
-                <div className="px-4 py-2.5 rounded-xl text-xs bg-white/5 border border-white/10 text-zinc-400 italic">
-                  {thinkingSteps[thinkingIndex]}
-                </div>
-              </div>
-            )}
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:flex w-[380px] flex-col border-r border-white/5 bg-black/40 backdrop-blur-xl relative z-10">
+        <div className="h-16 px-6 flex items-center justify-between border-b border-white/5 bg-black/20">
+          <div className="flex items-center gap-3">
+            <button onClick={() => navigate("/dashboard")} className="p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition group">
+              <ChevronLeft size={18} className="text-zinc-400 group-hover:text-blue-400" />
+            </button>
+            <span className="font-bold tracking-tight truncate max-w-[180px]">{website.title}</span>
           </div>
-          {/* TextArea for Chat */}
-          <div className="p-3 border-t border-white/10">
-            <div className="flex gap-2">
+          <Terminal size={16} className="text-blue-500/50" />
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-hide">
+          {messages.map((m, i) => (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div className={`max-w-[90%] px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-lg ${
+                m.role === "user" 
+                ? "bg-blue-600 text-white rounded-tr-none" 
+                : "bg-white/5 border border-white/10 text-zinc-300 rounded-tl-none"
+              }`}>
+                {m.content}
+              </div>
+            </motion.div>
+          ))}
+          {updateLoading && (
+            <div className="flex justify-start">
+              <div className="px-4 py-3 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-mono flex items-center gap-3 animate-pulse">
+                <Cpu size={14} className="animate-spin" />
+                {thinkingSteps[thinkingIndex]}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="p-4 bg-black/40 border-t border-white/5">
+          <div className="relative group">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-2xl blur opacity-20 group-focus-within:opacity-50 transition duration-500" />
+            <div className="relative flex gap-2">
               <input
-                row="1"
-                placeholder="Describe Changes..."
+                placeholder="Request System Modification..."
                 onChange={(e) => setPrompt(e.target.value)}
                 value={prompt}
-                className="flex-1
-              resize-none rounded-2xl px-4 py-3 bg-white/5 border border-white/10 text-sm
-              outline-none"
+                onKeyDown={(e) => e.key === 'Enter' && handleUpdate()}
+                className="flex-1 bg-[#0a0a0c] border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-blue-500/50 transition-all"
               />
-              <button
-                onClick={handleUpdate}
-                disabled={updateLoading}
-                className="px-4 py-3 rounded-2xl bg-white text-black"
-              >
-                <Send size={14} />
+              <button onClick={handleUpdate} disabled={updateLoading} className="p-3 bg-blue-600 hover:bg-blue-500 rounded-xl transition-all shadow-lg shadow-blue-600/20">
+                <Send size={18} />
               </button>
             </div>
-          </div>
-        </>
-      </aside>
-      {/* Preview Section */}
-      <div className="flex-1 flex flex-col ">
-        <div className="h-14 px-4 flex justify-between items-center border-b border-white/10 bg-black/80">
-          <span className="text-xs text-zinc-400">Live Preview</span>
-          <div className="flex gap-2">
-            {website.deployed ? (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation(); // prevent card click
-                  window.open(website.deployUrl, "_blank");
-                }}
-                className="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-linear-to-r from-orange-500 to-purple-500 text-sm font-semibold hover:scale-105 transition"
-              >
-                <MonitorCheck size={14} /> LIVE
-              </button>
-            ) : (
-              <button
-                onClick={() => handleDeploy}
-                className="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-linear-to-r from-indigo-500 to-purple-500 text-sm font-semibold hover:scale-105 transition"
-              >
-                <Rocket size={14} /> Deploy
-              </button>
-            )}
-            <button
-              className="p-2 lg:hidden"
-              onClick={() => setShowChat(!showChat)}
-            >
-              <MessageSquare size={18} />
-            </button>
-            <button className="p-2" onClick={() => setShowCode(!showCode)}>
-              <Code2 size={18} />
-            </button>
-            <button
-              className="p-2"
-              onClick={() => setShowFullPreview(!showCode)}
-            >
-              <Monitor size={18} />
-            </button>
           </div>
         </div>
-        <iframe ref={iframeRef} className="flex-1 w-full bg-white" />
-      </div>
-      {/* Show Chat for mobile */}
-      <AnimatePresence>
-        {showChat && (
-          <motion.div
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 100, opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="
-          fixed bottom-0 left-0 right-0
-          sm:bottom-6 sm:right-6 sm:left-auto
-          w-full sm:w-[380px]
-          h-[100dvh] sm:h-[550px]
-          bg-black/95 backdrop-blur-xl
-          border border-white/10
-          rounded-none sm:rounded-3xl
-          shadow-2xl
-          flex flex-col
-          z-50"
-          >
-            {/* Header */}
-            <div className="h-14 px-4 flex items-center gap-3 border-b border-white/10 bg-black sticky top-0 z-10">
-              {/* ❌ Close Button */}
-              <button
-                onClick={() => setShowChat(false)}
-                className="text-white/60 hover:text-white transition"
-              >
-                ✕
+      </aside>
+
+      {/* Main Preview Container */}
+      <main className="flex-1 flex flex-col relative bg-[#050507]">
+        <header className="h-16 px-6 flex justify-between items-center border-b border-white/5 bg-black/40 backdrop-blur-md">
+          <div className="flex items-center gap-4">
+             <button onClick={() => setShowChat(!showChat)} className="lg:hidden p-2 rounded-lg bg-white/5 border border-white/10">
+               <MessageSquare size={18} />
+             </button>
+             <div className="flex items-center gap-2 text-[10px] font-mono tracking-widest text-zinc-500 uppercase">
+               <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" /> Live_Core_Preview
+             </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button onClick={() => setShowCode(!showCode)} className={`p-2 rounded-lg transition-all ${showCode ? "bg-blue-600 text-white" : "bg-white/5 text-zinc-400 hover:bg-white/10"}`}>
+              <Code2 size={18} />
+            </button>
+            <button onClick={() => setShowFullPreview(true)} className="p-2 rounded-lg bg-white/5 text-zinc-400 hover:bg-white/10">
+              <Monitor size={18} />
+            </button>
+            <div className="w-px h-6 bg-white/10 mx-1" />
+            {website.deployed ? (
+              <button onClick={() => window.open(website.deployUrl, "_blank")} className="flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold hover:bg-emerald-500/20 transition">
+                <MonitorCheck size={14} /> LIVE_ACCESS
               </button>
+            ) : (
+              <button onClick={handleDeploy} className="flex items-center gap-2 px-6 py-2 rounded-full bg-blue-600 text-white text-xs font-bold hover:bg-blue-500 shadow-lg shadow-blue-600/20 transition active:scale-95">
+                <Rocket size={14} /> DEPLOY_PROTOCOL
+              </button>
+            )}
+          </div>
+        </header>
 
-              <span className="font-semibold truncate text-sm">
-                {website.title}
-              </span>
-            </div>
-
-            {/* Chat Messages */}
-            <div className="flex-1 overflow-y-auto px-3 py-4 space-y-4 bg-black">
-              {messages.map((m, i) => (
-                <div
-                  key={i}
-                  className={`max-w-[85%] ${
-                    m.role === "user" ? "ml-auto" : "mr-auto"
-                  }`}
-                >
-                  <div
-                    className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed break-words ${
-                      m.role === "user"
-                        ? "bg-white text-black"
-                        : "bg-white/5 border border-white/10 text-zinc-200"
-                    }`}
-                  >
-                    {m.content}
+        {/* Browser Frame Preview */}
+        <div className="flex-1 p-6 relative overflow-hidden">
+          <div className="w-full h-full rounded-2xl border border-white/10 bg-white overflow-hidden shadow-2xl relative">
+            <iframe ref={iframeRef} title="preview" className="w-full h-full" sandbox="allow-scripts allow-same-origin" />
+            {updateLoading && (
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center z-50">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="w-16 h-1 bg-white/10 rounded-full overflow-hidden">
+                    <motion.div initial={{ x: "-100%" }} animate={{ x: "100%" }} transition={{ repeat: Infinity, duration: 1.5 }} className="w-1/2 h-full bg-blue-500" />
                   </div>
+                  <span className="text-[10px] font-mono text-blue-400 tracking-widest uppercase">System_Sync_In_Progress</span>
                 </div>
-              ))}
-
-              {updateLoading && (
-                <div className="max-w-[85%] mr-auto">
-                  <div className="px-4 py-2.5 rounded-xl text-xs bg-white/5 border border-white/10 text-zinc-400 italic">
-                    {thinkingSteps[thinkingIndex]}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Input Box */}
-            <div className="p-3 border-t border-white/10 bg-black sticky bottom-0">
-              <div className="flex gap-2">
-                <input
-                  placeholder="Describe Changes..."
-                  onChange={(e) => setPrompt(e.target.value)}
-                  value={prompt}
-                  className="flex-1 rounded-2xl px-4 py-3 bg-white/5 border border-white/10 text-sm outline-none"
-                />
-                <button
-                  onClick={handleUpdate}
-                  disabled={updateLoading}
-                  className="px-4 py-3 rounded-2xl bg-white text-black"
-                >
-                  <Send size={14} />
-                </button>
               </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      {/* Monaco Code Editor */}
+            )}
+          </div>
+        </div>
+      </main>
+
+      {/* Monaco Drawer */}
       <AnimatePresence>
         {showCode && (
-          <motion.div
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            className="fixed inset-y-0 right-0 w-full lg:w-[45%] z-[9999] bg-[#1e1e1e]
-            flex flex-col"
-          >
-            <div
-              className="h-12 px-4 flex justify-between items-center border-b
-            border-white/10 bg-[#1e1e1e]"
-            >
-              <span className="text-sm font-medium">index.html</span>
-              <button onClick={() => setShowCode(false)}>
-                <X size={18} />
+          <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", damping: 25, stiffness: 200 }} className="fixed inset-y-0 right-0 w-full lg:w-[45%] z-[100] bg-[#1e1e1e] shadow-[-20px_0_50px_rgba(0,0,0,0.5)] flex flex-col">
+            <div className="h-16 px-6 flex justify-between items-center border-b border-white/5 bg-[#1e1e1e]">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-orange-500" />
+                <span className="text-sm font-mono text-zinc-400">core_module.html</span>
+              </div>
+              <button onClick={() => setShowCode(false)} className="p-2 hover:bg-white/5 rounded-lg transition">
+                <X size={20} />
               </button>
             </div>
-            <Editor
-              height="100%"
-              defaultLanguage="html"
-              theme="vs-dark"
-              value={code}
-              onChange={(v) => setCode(v)}
-            />
+            <Editor height="100%" defaultLanguage="html" theme="vs-dark" value={code} onChange={(v) => setCode(v)} options={{ fontSize: 14, minimap: { enabled: false }, padding: { top: 20 } }} />
           </motion.div>
         )}
       </AnimatePresence>
-      {/* Live Preview */}
+
+      {/* Fullscreen Overlay */}
       <AnimatePresence>
         {showFullPreview && (
-          <motion.div
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            className="fixed inset-0 z-[9999] bg-black"
-          >
-            <iframe
-              className="h-full w-full bg-white"
-              srcDoc={code}
-              sandbox="allow-scripts allow-same-origin allow-forms"
-            />
-            <button
-              onClick={() => setShowFullPreview(!showFullPreview)}
-              className="absolute top-4 right-4 p-2 bg-black/70 rounded-lg"
-            >
-              X
-            </button>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-black flex flex-col">
+            <div className="h-14 px-6 flex justify-between items-center bg-[#0a0a0c] border-b border-white/5">
+              <span className="text-xs font-mono text-zinc-500 italic">{website.deployUrl || "LOCAL_HOST"}</span>
+              <button onClick={() => setShowFullPreview(false)} className="p-2 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500/20"> <X size={18} /> </button>
+            </div>
+            <iframe className="flex-1 w-full bg-white" srcDoc={code} title="full-preview" />
           </motion.div>
         )}
       </AnimatePresence>
