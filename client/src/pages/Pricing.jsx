@@ -1,16 +1,19 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "motion/react";
-import { ArrowLeft, Check, Coins } from "lucide-react";
+import { motion } from "motion/react"; // Fixed import for motion
+import { ArrowLeft, Check, Coins, Loader2 } from "lucide-react"; // Added Loader2
+import { serverUrl } from "../App";
 
 function Pricing() {
+  const [loading, setLoading] = useState(null); // Changed to null/key to track specific button
   const navigate = useNavigate();
+
   const plans = [
     {
       key: "free",
       name: "Free",
       price: "₹0",
-      credits: 100, // Enough for 2 website generations
+      credits: 100,
       description: "Perfect to explore GenWeb.ai",
       features: [
         "AI website generation",
@@ -24,7 +27,7 @@ function Pricing() {
       key: "pro",
       name: "Pro",
       price: "₹499",
-      credits: 1000, // Enough for 20 website generations
+      credits: 500,
       description: "Best for freelancers and independent developers.",
       features: [
         "Everything in Free",
@@ -32,14 +35,14 @@ function Pricing() {
         "Multi-page SPA support",
         "Priority AI processing",
       ],
-      popular: true, // You can use this flag to highlight the middle card with a border or glow!
+      popular: true,
       button: "Upgrade to Pro",
     },
     {
-      key: "premium",
-      name: "Premium",
+      key: "enterprise",
+      name: "enterprise",
       price: "₹1499",
-      credits: 5000, // Enough for 100 website generations
+      credits: 1000,
       description: "For agencies and power users requiring high volume.",
       features: [
         "Everything in Pro",
@@ -51,6 +54,76 @@ function Pricing() {
       button: "Get Premium",
     },
   ];
+
+  const handleSubscription = async (planKey) => {
+    if (planKey === "free") {
+      navigate("/dashboard");
+      return;
+    }
+
+    setLoading(planKey); // Set loading for the specific plan clicked
+    try {
+      // 1. Create Order on Backend
+      const response = await fetch(`${serverUrl}/api/billing/create-order`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include", // <--- ADD THIS LINE
+        body: JSON.stringify({ planType: planKey }),
+      });
+      const data = await response.json();
+
+      if (!data.success) throw new Error(data.message);
+
+      // 2. Configure Razorpay Options
+      const options = {
+        key: data.keyId,
+        amount: data.amount,
+        currency: "INR",
+        name: "GenWeb.ai",
+        description: `Upgrade to ${planKey} plan`,
+        order_id: data.orderId,
+        handler: async function (response) {
+          // 3. Verify Payment on Backend
+          const verifyRes = await fetch(
+            `${serverUrl}/api/billing/verify-payment`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              credentials: "include",
+              body: JSON.stringify({
+                ...response,
+                planType: planKey,
+              }),
+            },
+          );
+
+          const verifyData = await verifyRes.json();
+
+          if (verifyData.success) {
+            // Instead of an alert, maybe navigate with a state
+            navigate("/dashboard", { state: { paymentSuccess: true } });
+          }
+        },
+        modal: {
+          ondismiss: function () {
+            setLoading(null); // Reset loading if user closes modal
+          },
+        },
+        prefill: {
+          email: "user@example.com",
+        },
+        theme: { color: "#6366F1" },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (error) {
+      setLoading(null); // Reset loading so user can try again
+      console.error("Payment failed", error);
+      alert("Something went wrong with the payment.");
+    }
+  };
+  
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#050505] text-white px-6 pt-16 pb-24">
       <div className="absolute inset-0 pointer-events-none">
@@ -124,15 +197,21 @@ function Pricing() {
             </div>
 
             <motion.button
+              onClick={() => handleSubscription(p.key)}
+              disabled={loading !== null} // Disable all buttons if one is loading
               whileTap={{ scale: 0.96 }}
-              className={`w-full py-3 rounded-xl font-semibold transition
-    ${
-      p.popular
-        ? "bg-indigo-500 hover:bg-indigo-600"
-        : "bg-white/10 hover:bg-white/20"
-    } disabled:opacity-60`}
+              className={`w-full py-3 rounded-xl font-semibold transition flex items-center justify-center gap-2
+                ${p.popular ? "bg-indigo-500 hover:bg-indigo-600" : "bg-white/10 hover:bg-white/20"} 
+                ${loading !== null ? "opacity-50 cursor-not-allowed" : ""}`}
             >
-              {p.button}
+              {loading === p.key ? (
+                <>
+                  <Loader2 className="animate-spin" size={20} />
+                  Processing...
+                </>
+              ) : (
+                p.button
+              )}
             </motion.button>
           </motion.div>
         ))}

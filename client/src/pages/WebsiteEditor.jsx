@@ -4,7 +4,17 @@ import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { serverUrl } from "../App";
 import { useState } from "react";
-import { Code2, MessageSquare, Monitor, Rocket, Send, X } from "lucide-react";
+import {
+  Code2,
+  MessageSquare,
+  Monitor,
+  MonitorCheck,
+  MonitorCheckIcon,
+  Rocket,
+  Send,
+  SmileIcon,
+  X,
+} from "lucide-react";
 import { useRef } from "react";
 import { AnimatePresence } from "framer-motion";
 import Editor from "@monaco-editor/react";
@@ -189,8 +199,16 @@ function WebsiteEditor() {
         <div className="h-14 px-4 flex justify-between items-center border-b border-white/10 bg-black/80">
           <span className="text-xs text-zinc-400">Live Preview</span>
           <div className="flex gap-2">
-            {website.handleDeployed ? (
-              ""
+            {website.deployed ? (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation(); // prevent card click
+                  window.open(website.deployUrl, "_blank");
+                }}
+                className="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-linear-to-r from-orange-500 to-purple-500 text-sm font-semibold hover:scale-105 transition"
+              >
+                <MonitorCheck size={14} /> LIVE
+              </button>
             ) : (
               <button
                 onClick={() => handleDeploy}

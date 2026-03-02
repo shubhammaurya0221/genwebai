@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import LoginModal from "../components/loginModal";
 import { useDispatch, useSelector } from "react-redux";
@@ -8,6 +8,7 @@ import { setUserData } from "../redux/userSlice";
 import { serverUrl } from "../App";
 import Dashboard from "./Dashboard";
 import { useNavigate } from "react-router-dom";
+import { Share2, Check } from "lucide-react"; // Import these for the button
 
 function Home() {
   const highlights = [
@@ -19,7 +20,18 @@ function Home() {
   const [openLogin, setOpenLogin] = useState(false);
   const { userData } = useSelector((state) => state.user);
   const [openProfile, setOpenProfile] = useState(false);
+  const [websites, setWebsites] = useState(null);
   const navigate = useNavigate();
+  const [copiedId, setCopiedId] = useState(null);
+
+  const handleCopy = async (site) => {
+    await navigator.clipboard.writeText(site.deployUrl);
+    setCopiedId(site._id);
+    setTimeout(() => {
+      setCopiedId(null);
+    }, 2000);
+  };
+
   const handleLogOut = async () => {
     try {
       await axios.get(`${serverUrl}/api/auth/logout`, {
@@ -31,6 +43,22 @@ function Home() {
       console.log(error);
     }
   };
+  useEffect(() => {
+    if (!userData) return;
+    const handleGetAllWebsites = async () => {
+      try {
+        const result = await axios.get(`${serverUrl}/api/website/get-all`, {
+          withCredentials: true,
+        });
+        console.log("webites data", result.data);
+        setWebsites(result.data.websites);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    handleGetAllWebsites();
+  }, [userData]);
+
   return (
     <div className="relative min-h-screen bg-[#040404] text-white overflow-hidden">
       {/* HEADER SECTION */}
@@ -45,13 +73,13 @@ function Home() {
           <div className="flex items-center gap-5">
             <div
               className="hidden md:inline text-sm text-zinc-400 hover:text-white cursor-pointer"
-              onClick={() => navigate('/pricing')}
+              onClick={() => navigate("/pricing")}
             >
               Pricing
             </div>
             {userData && (
               <div
-                onClick={() => navigate('/pricing')}
+                onClick={() => navigate("/pricing")}
                 className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-sm cursor-pointer hover:bg-white/10 transition"
               >
                 <Coins size={14} className="text-yellow-400 " />
@@ -110,7 +138,7 @@ function Home() {
 
                         <button
                           className="w-full px-4 py-3 text-left text-sm hover:bg-white/5"
-                          onClick={() => nevigate("/dashboard")}
+                          onClick={() => navigate("/dashboard")}
                         >
                           Dashboard
                         </button>
@@ -154,7 +182,7 @@ function Home() {
           className="px-10 py-4 rounded-xl bg-white text-black font-semibold hover:scale-105 transition mt-12"
           onClick={() => {
             if (userData) {
-              nevigate("/dashboard");
+              navigate("/dashboard");
             } else {
               setOpenLogin(true);
             }
@@ -164,24 +192,125 @@ function Home() {
         </button>
       </section>
       {/* CARD SHOWCASE */}
-      <section className="max-w-7xl mx-auto px-6 pb-32">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-          {highlights.map((h, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              className="rounded-2xl bg-white/5 border border-white/10 p-8"
+      {!userData && (
+        <section className="max-w-7xl mx-auto px-6 pb-32">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+            {highlights.map((h, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                className="rounded-2xl bg-white/5 border border-white/10 p-8"
+              >
+                <h1 className="text-xl font-semibold mb-3">{h}</h1>
+                <p className="text-sm text-zinc-400">
+                  GenWeb.ai builds real websites - clear code, animation,
+                  responsivenss and scalable structure.
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+      )}
+      {/* WEBSITE PREVIEW SECTION */}
+      {userData && websites?.length > 0 && (
+        <section className="max-w-7xl mx-auto px-6 pb-32">
+          <div className="flex justify-between items-end mb-8">
+            <div>
+              <h3 className="text-3xl font-bold mb-2">Your Recent Projects</h3>
+              <p className="text-zinc-400">Pick up where you left off</p>
+            </div>
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="text-sm text-purple-400 hover:text-purple-300 font-medium"
             >
-              <h1 className="text-xl font-semibold mb-3">{h}</h1>
-              <p className="text-sm text-zinc-400">
-                GenWeb.ai builds real websites - clear code, animation,
-                responsivenss and scalable structure.
-              </p>
-            </motion.div>
-          ))}
-        </div>
-      </section>
+              View All Projects →
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {websites.slice(0, 3).map((w, i) => (
+              <motion.div
+                key={w._id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                whileHover={{ y: -6 }}
+                onClick={() => navigate(`/editor/${w._id}`)}
+                className="group relative cursor-pointer rounded-2xl bg-[#0b0b0b] border border-white/10 overflow-hidden hover:border-purple-500/50 transition-all shadow-xl"
+              >
+                {/* Preview Window Header */}
+                <div className="px-4 py-3 bg-white/5 border-b border-white/10 flex items-center justify-between gap-2">
+                  {/* LEFT SIDE */}
+                  <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                    <div className="w-2.5 h-2.5 rounded-full bg-red-500/50 flex-shrink-0" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/50 flex-shrink-0" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-green-500/50 flex-shrink-0" />
+
+                    <span className="ml-2 text-[10px] text-zinc-400 truncate uppercase tracking-widest font-medium">
+                      {w.title || "Untitled Project"}
+                    </span>
+                  </div>
+
+                  {/* RIGHT SIDE */}
+                  <button
+                    // onClick={() => handleCopy(w)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCopy(w);
+                    }}
+                    className="flex-shrink-0 p-1.5 rounded-md hover:bg-white/10 text-zinc-400 hover:text-white transition-all relative"
+                  >
+                    <AnimatePresence mode="wait">
+                      {copiedId === w._id ? (
+                        <motion.div
+                          key="check"
+                          initial={{ scale: 0.5, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          exit={{ scale: 0.5, opacity: 0 }}
+                        >
+                          <Check size={14} className="text-green-400" />
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          key="share"
+                          initial={{ scale: 0.5, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          exit={{ scale: 0.5, opacity: 0 }}
+                        >
+                          <Share2 size={14} />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </button>
+                </div>
+
+                {/* Iframe Preview Container */}
+                <div className="h-52 bg-[#050505] relative pointer-events-none overflow-hidden">
+                  <div className="absolute inset-0 z-10 w-full h-full">
+                    {/* This scales the content correctly for the card size */}
+                    <iframe
+                      srcDoc={w.latestCode}
+                      title={w.name}
+                      className="w-[1280px] h-[800px] border-none origin-top-left scale-[0.25] absolute top-0 left-0 opacity-80"
+                      style={{ width: "400%", height: "400%" }}
+                    />
+                  </div>
+
+                  {/* Hover Overlay */}
+                  <div className="absolute inset-0 z-20 bg-black/0 group-hover:bg-black/60 transition-all duration-300 flex items-center justify-center">
+                    <span className="opacity-0 group-hover:opacity-100 bg-white text-black px-5 py-2.5 rounded-full text-xs font-bold transition-all transform translate-y-4 group-hover:translate-y-0 shadow-2xl">
+                      Open in Editor
+                    </span>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* FOOTER */}
       <footer className="border-t border-white/10 py-10 text-center text-sm text-zinc-500">
         &copy; {new Date().getFullYear()} GenWeb.AI
