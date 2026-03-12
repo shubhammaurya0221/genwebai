@@ -162,8 +162,11 @@ function WebsiteEditor() {
       <main className="flex-1 flex flex-col relative bg-[#050507]">
         <header className="h-16 px-6 flex justify-between items-center border-b border-white/5 bg-black/40 backdrop-blur-md">
           <div className="flex items-center gap-4">
-             <button onClick={() => setShowChat(!showChat)} className="lg:hidden p-2 rounded-lg bg-white/5 border border-white/10">
-               <MessageSquare size={18} />
+            <button
+              onClick={() => setShowChat(true)}
+              className="lg:hidden p-2 rounded-lg bg-white/5 border border-white/10"
+             >
+            <MessageSquare size={18} />
              </button>
              <div className="flex items-center gap-2 text-[10px] font-mono tracking-widest text-zinc-500 uppercase">
                <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" /> Live_Core_Preview
@@ -191,8 +194,8 @@ function WebsiteEditor() {
         </header>
 
         {/* Browser Frame Preview */}
-        <div className="flex-1 p-6 relative overflow-hidden">
-          <div className="w-full h-full rounded-2xl border border-white/10 bg-white overflow-hidden shadow-2xl relative">
+        <div className="flex-1 p-3 md:p-6 relative overflow-hidden">
+          <div className="w-full h-full rounded-xl md:rounded-2xl border border-white/10 bg-white overflow-hidden shadow-2xl relative">
             <iframe ref={iframeRef} title="preview" className="w-full h-full" sandbox="allow-scripts allow-same-origin" />
             {updateLoading && (
               <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center z-50">
@@ -207,6 +210,80 @@ function WebsiteEditor() {
           </div>
         </div>
       </main>
+
+      {/* Mobile Chat Drawer */}
+<AnimatePresence>
+  {showChat && (
+    <motion.div
+      initial={{ x: "-100%" }}
+      animate={{ x: 0 }}
+      exit={{ x: "-100%" }}
+      transition={{ type: "spring", damping: 25 }}
+      className="fixed inset-y-0 left-0 w-full sm:w-[380px] z-[150] bg-[#020203] border-r border-white/10 flex flex-col lg:hidden"
+    >
+      {/* Header */}
+      <div className="h-16 px-4 flex items-center justify-between border-b border-white/10">
+        <div className="flex items-center gap-3">
+          <MessageSquare size={18} />
+          <span className="font-semibold text-sm">AI Chat</span>
+        </div>
+
+        <button
+          onClick={() => setShowChat(false)}
+          className="p-2 rounded-lg bg-white/5"
+        >
+          <X size={18} />
+        </button>
+      </div>
+
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {messages.map((m, i) => (
+          <div
+            key={i}
+            className={`flex ${
+              m.role === "user" ? "justify-end" : "justify-start"
+            }`}
+          >
+            <div
+              className={`max-w-[85%] px-4 py-2 rounded-xl text-sm ${
+                m.role === "user"
+                  ? "bg-blue-600 text-white"
+                  : "bg-white/10 text-zinc-300"
+              }`}
+            >
+              {m.content}
+            </div>
+          </div>
+        ))}
+
+        {updateLoading && (
+          <div className="text-xs text-blue-400 font-mono animate-pulse">
+            {thinkingSteps[thinkingIndex]}
+          </div>
+        )}
+      </div>
+
+      {/* Input */}
+      <div className="p-4 border-t border-white/10 flex gap-2">
+        <input
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleUpdate()}
+          placeholder="Ask AI to modify..."
+          className="flex-1 bg-black border border-white/10 rounded-lg px-3 py-2 text-sm"
+        />
+
+        <button
+          onClick={handleUpdate}
+          className="p-2 bg-blue-600 rounded-lg"
+        >
+          <Send size={16} />
+        </button>
+      </div>
+    </motion.div>
+  )}
+</AnimatePresence>
 
       {/* Monaco Drawer */}
       <AnimatePresence>
